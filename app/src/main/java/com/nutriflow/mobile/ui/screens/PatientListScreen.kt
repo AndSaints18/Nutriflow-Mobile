@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -22,7 +22,6 @@ data class Patient(val id: String, val name: String, val lastConsultation: Strin
 fun PatientListScreen(onBackClick: () -> Unit, onPatientClick: (String) -> Unit) {
     var searchQuery by remember { mutableStateOf("") }
     
-    // Lista fake para demonstração (MOB-11)
     val allPatients = listOf(
         Patient("1", "Ana Silva", "10/09/2026"),
         Patient("2", "Bruno Costa", "05/09/2026"),
@@ -40,7 +39,7 @@ fun PatientListScreen(onBackClick: () -> Unit, onPatientClick: (String) -> Unit)
                 title = { Text("Meus Pacientes", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
                 }
             )
@@ -52,7 +51,6 @@ fun PatientListScreen(onBackClick: () -> Unit, onPatientClick: (String) -> Unit)
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            // Barra de Busca (MOB-12)
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
