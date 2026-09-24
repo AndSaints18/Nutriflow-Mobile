@@ -12,6 +12,8 @@ import com.nutriflow.mobile.data.session.SessionManager
 import com.nutriflow.mobile.ui.screens.LoginScreen
 import com.nutriflow.mobile.ui.screens.PatientDashboard
 import com.nutriflow.mobile.ui.screens.NutritionistDashboard
+import com.nutriflow.mobile.ui.screens.PatientListScreen
+import com.nutriflow.mobile.ui.screens.PatientDetailsScreen
 import com.nutriflow.mobile.ui.viewmodel.AuthViewModel
 import com.nutriflow.mobile.ui.viewmodel.AuthState
 
@@ -64,12 +66,32 @@ fun NavGraph(navController: NavHostController) {
             })
         }
         composable(Screen.NutritionistDashboard.route) {
-            NutritionistDashboard(onLogout = {
-                authViewModel.logout()
-                navController.navigate(Screen.Login.route) {
-                    popUpTo(Screen.NutritionistDashboard.route) { inclusive = true }
+            NutritionistDashboard(
+                onLogout = {
+                    authViewModel.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.NutritionistDashboard.route) { inclusive = true }
+                    }
+                },
+                onViewPatientsClick = {
+                    navController.navigate(Screen.PatientList.route)
                 }
-            })
+            )
+        }
+        composable(Screen.PatientList.route) {
+            PatientListScreen(
+                onBackClick = { navController.popBackStack() },
+                onPatientClick = { patientId ->
+                    navController.navigate(Screen.PatientDetails.createRoute(patientId))
+                }
+            )
+        }
+        composable(Screen.PatientDetails.route) { backStackEntry ->
+            val patientId = backStackEntry.arguments?.getString("patientId") ?: ""
+            PatientDetailsScreen(
+                patientId = patientId,
+                onBackClick = { navController.popBackStack() }
+            )
         }
     }
 }
