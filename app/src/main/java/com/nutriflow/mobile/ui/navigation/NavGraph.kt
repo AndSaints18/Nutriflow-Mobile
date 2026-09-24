@@ -13,6 +13,7 @@ import com.nutriflow.mobile.ui.screens.LoginScreen
 import com.nutriflow.mobile.ui.screens.PatientDashboard
 import com.nutriflow.mobile.ui.screens.NutritionistDashboard
 import com.nutriflow.mobile.ui.screens.PatientListScreen
+import com.nutriflow.mobile.ui.screens.PatientDetailsScreen
 import com.nutriflow.mobile.ui.viewmodel.AuthViewModel
 import com.nutriflow.mobile.ui.viewmodel.AuthState
 
@@ -83,6 +84,13 @@ fun NavGraph(navController: NavHostController) {
                 onPatientClick = { patientId ->
                     navController.navigate(Screen.PatientDetails.createRoute(patientId))
                 }
+            )
+        }
+        composable(Screen.PatientDetails.route) { backStackEntry ->
+            val patientId = backStackEntry.arguments?.getString("patientId") ?: ""
+            PatientDetailsScreen(
+                patientId = patientId,
+                onBackClick = { navController.popBackStack() }
             )
         }
     }
