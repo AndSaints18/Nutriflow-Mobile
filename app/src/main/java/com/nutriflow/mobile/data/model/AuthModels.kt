@@ -2,7 +2,14 @@ package com.nutriflow.mobile.data.model
 
 data class LoginRequest(
     val email: String,
-    val passwordHash: String // The backend expects passwordHash based on Prisma schema
+    val password: String
+)
+
+data class RegisterRequest(
+    val name: String,
+    val email: String,
+    val role: String, // "NUTRITIONIST", "PATIENT"
+    val password: String
 )
 
 data class LoginResponse(

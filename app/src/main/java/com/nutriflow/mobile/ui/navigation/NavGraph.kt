@@ -9,13 +9,23 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.nutriflow.mobile.data.session.SessionManager
+import com.nutriflow.mobile.ui.screens.AppointmentsScreen
+import com.nutriflow.mobile.ui.screens.ChatScreen
+import com.nutriflow.mobile.ui.screens.CreateMealPlanScreen
 import com.nutriflow.mobile.ui.screens.LoginScreen
-import com.nutriflow.mobile.ui.screens.PatientDashboard
 import com.nutriflow.mobile.ui.screens.NutritionistDashboard
-import com.nutriflow.mobile.ui.screens.PatientListScreen
+import com.nutriflow.mobile.ui.screens.PatientDashboard
 import com.nutriflow.mobile.ui.screens.PatientDetailsScreen
-import com.nutriflow.mobile.ui.viewmodel.AuthViewModel
+import com.nutriflow.mobile.ui.screens.PatientListScreen
+import com.nutriflow.mobile.ui.screens.RegisterScreen
 import com.nutriflow.mobile.ui.viewmodel.AuthState
+import com.nutriflow.mobile.ui.viewmodel.AuthViewModel
+
+fun isPatientProfile(profile: String?): Boolean {
+    if (profile == null) return false
+    val p = profile.trim()
+    return p.equals("PATIENT", ignoreCase = true) || p.equals("Paciente", ignoreCase = true)
+}
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -28,7 +38,7 @@ fun NavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
         startDestination = if (authViewModel.uiState is AuthState.Authenticated) {
-            if (authViewModel.getRole() == "PATIENT") Screen.PatientDashboard.route else Screen.NutritionistDashboard.route
+            if (isPatientProfile(authViewModel.getRole())) Screen.PatientDashboard.route else Screen.NutritionistDashboard.route
         } else {
             Screen.Login.route
         }
@@ -40,19 +50,51 @@ fun NavGraph(navController: NavHostController) {
                 onLoginClick = { email, password ->
                     authViewModel.login(email, password)
                 },
+                onRegisterClick = {
+                    authViewModel.resetState()
+                    navController.navigate(Screen.Register.route)
+                },
                 isLoading = state is AuthState.Loading,
                 errorMessage = if (state is AuthState.Error) state.message else null
             )
             
             if (state is AuthState.Success) {
                 LaunchedEffect(state) {
-                    val route = if (state.user.profile == "PATIENT") {
+                    val route = if (isPatientProfile(state.user.profile)) {
                         Screen.PatientDashboard.route
                     } else {
                         Screen.NutritionistDashboard.route
                     }
                     navController.navigate(route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+            }
+        }
+        composable(Screen.Register.route) {
+            val state = authViewModel.uiState
+
+            RegisterScreen(
+                onRegisterClick = { name, email, role, password ->
+                    authViewModel.register(name, email, role, password)
+                },
+                onLoginClick = {
+                    authViewModel.resetState()
+                    navController.popBackStack()
+                },
+                isLoading = state is AuthState.Loading,
+                errorMessage = if (state is AuthState.Error) state.message else null
+            )
+
+            if (state is AuthState.Success) {
+                LaunchedEffect(state) {
+                    val route = if (isPatientProfile(state.user.profile)) {
+                        Screen.PatientDashboard.route
+                    } else {
+                        Screen.NutritionistDashboard.route
+                    }
+                    navController.navigate(route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 }
             }
@@ -75,6 +117,15 @@ fun NavGraph(navController: NavHostController) {
                 },
                 onViewPatientsClick = {
                     navController.navigate(Screen.PatientList.route)
+                },
+                onViewAppointmentsClick = {
+                    navController.navigate(Screen.Appointments.route)
+                },
+                onCreateMealPlanClick = {
+                    navController.navigate(Screen.CreateMealPlan.route)
+                },
+                onOpenChatClick = {
+                    navController.navigate(Screen.Chat.createRoute("Amanda Rocha"))
                 }
             )
         }
@@ -90,6 +141,24 @@ fun NavGraph(navController: NavHostController) {
             val patientId = backStackEntry.arguments?.getString("patientId") ?: ""
             PatientDetailsScreen(
                 patientId = patientId,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.Appointments.route) {
+            AppointmentsScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.CreateMealPlan.route) {
+            CreateMealPlanScreen(
+                onBackClick = { navController.popBackStack() },
+                onSaveSuccess = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.Chat.route) { backStackEntry ->
+            val patientName = backStackEntry.arguments?.getString("patientName") ?: "Paciente"
+            ChatScreen(
+                patientName = patientName,
                 onBackClick = { navController.popBackStack() }
             )
         }

@@ -31,15 +31,28 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
         }
     }
 
-    fun login(email: String, passwordHash: String) {
+    fun login(email: String, password: String) {
         viewModelScope.launch {
             uiState = AuthState.Loading
-            repository.login(email, passwordHash)
+            repository.login(email, password)
                 .onSuccess { response ->
                     uiState = AuthState.Success(response.user)
                 }
                 .onFailure { error ->
                     uiState = AuthState.Error(error.message ?: "Erro desconhecido")
+                }
+        }
+    }
+
+    fun register(name: String, email: String, role: String, password: String) {
+        viewModelScope.launch {
+            uiState = AuthState.Loading
+            repository.register(name, email, role, password)
+                .onSuccess { response ->
+                    uiState = AuthState.Success(response.user)
+                }
+                .onFailure { error ->
+                    uiState = AuthState.Error(error.message ?: "Erro ao cadastrar")
                 }
         }
     }
