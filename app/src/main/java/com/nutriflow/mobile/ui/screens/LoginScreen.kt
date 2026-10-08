@@ -13,6 +13,7 @@ import com.nutriflow.mobile.ui.components.NutriTextField
 @Composable
 fun LoginScreen(
     onLoginClick: (String, String) -> Unit,
+    onRegisterClick: () -> Unit = {},
     isLoading: Boolean = false,
     errorMessage: String? = null
 ) {
@@ -79,6 +80,12 @@ fun LoginScreen(
                     onClick = { onLoginClick(email, password) },
                     enabled = email.isNotEmpty() && password.isNotEmpty()
                 )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            TextButton(onClick = onRegisterClick) {
+                Text("Não tem uma conta? Cadastre-se")
             }
         }
     }
