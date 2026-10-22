@@ -63,6 +63,7 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
     }
 
     fun getRole(): String? = repository.getStoredRole()
+    fun getUserName(): String? = repository.getStoredName()
     
     fun resetState() {
         uiState = if (repository.isLoggedIn()) AuthState.Authenticated else AuthState.Idle

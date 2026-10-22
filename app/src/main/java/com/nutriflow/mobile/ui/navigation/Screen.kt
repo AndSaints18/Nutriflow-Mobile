@@ -5,6 +5,7 @@ sealed class Screen(val route: String) {
     object Register : Screen("register")
     object PatientDashboard : Screen("patient_dashboard")
     object NutritionistDashboard : Screen("nutritionist_dashboard")
+    object AdminDashboard : Screen("admin_dashboard")
     object PatientList : Screen("patient_list")
     object PatientDetails : Screen("patient_details/{patientId}") {
         fun createRoute(patientId: String) = "patient_details/$patientId"

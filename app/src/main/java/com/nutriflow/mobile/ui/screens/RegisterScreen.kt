@@ -23,7 +23,7 @@ fun RegisterScreen(
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var selectedRole by remember { mutableStateOf("NUTRITIONIST") } // "NUTRITIONIST" or "PATIENT"
+    var selectedRole by remember { mutableStateOf("NUTRITIONIST") } // "NUTRITIONIST", "PATIENT", "ADMIN"
 
     val scrollState = rememberScrollState()
 
@@ -82,22 +82,26 @@ fun RegisterScreen(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 RadioButton(
                     selected = selectedRole == "NUTRITIONIST",
                     onClick = { selectedRole = "NUTRITIONIST" }
                 )
-                Text(
-                    text = "Nutricionista",
-                    modifier = Modifier.padding(end = 16.dp)
-                )
+                Text(text = "Nutri", style = MaterialTheme.typography.bodySmall)
 
                 RadioButton(
                     selected = selectedRole == "PATIENT",
                     onClick = { selectedRole = "PATIENT" }
                 )
-                Text(text = "Paciente")
+                Text(text = "Paciente", style = MaterialTheme.typography.bodySmall)
+
+                RadioButton(
+                    selected = selectedRole == "ADMIN",
+                    onClick = { selectedRole = "ADMIN" }
+                )
+                Text(text = "Admin", style = MaterialTheme.typography.bodySmall)
             }
 
             if (errorMessage != null) {
