@@ -8,6 +8,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -446,6 +448,7 @@ fun MacroCard(label: String, value: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NutritionistDashboard(
+    nutritionistName: String = "Nutricionista",
     onLogout: () -> Unit,
     onViewPatientsClick: () -> Unit,
     onViewAppointmentsClick: () -> Unit = {},
@@ -457,10 +460,23 @@ fun NutritionistDashboard(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("NutriFlow Admin", fontWeight = FontWeight.Bold) },
+                title = {
+                    Column {
+                        Text(
+                            text = "PAINEL DO NUTRICIONISTA",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "Olá, $nutritionistName",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
                 actions = {
                     TextButton(onClick = onLogout) {
-                        Text("Sair", color = MaterialTheme.colorScheme.error)
+                        Text("Sair", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                     }
                 }
             )
@@ -518,6 +534,106 @@ fun NutritionistDashboard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Mensagens e Chat com Paciente")
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AdminDashboard(
+    adminName: String = "Administrador",
+    onLogout: () -> Unit,
+    totalUsersCount: String = "12",
+    patientsCount: String = "8",
+    nutritionistsCount: String = "3",
+    foodsCount: String = "15"
+) {
+    val scrollState = rememberScrollState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(
+                            text = "PAINEL DO ADMINISTRADOR",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "Olá, $adminName",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                actions = {
+                    TextButton(onClick = onLogout) {
+                        Text("Sair", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp)
+                .verticalScroll(scrollState),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Gestão Geral da Plataforma",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    SummaryCard("Total Usuários", totalUsersCount, Icons.Default.Group)
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    SummaryCard("Nutricionistas", nutritionistsCount, Icons.Default.Person)
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    SummaryCard("Pacientes", patientsCount, Icons.Default.Group)
+                }
+                Box(modifier = Modifier.weight(1f)) {
+                    SummaryCard("Alimentos", foodsCount, Icons.Default.Restaurant)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            NutriButton(
+                text = "Gerenciar Usuários da Plataforma",
+                onClick = {}
+            )
+
+            OutlinedButton(
+                onClick = {},
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Tabela de Alimentos")
+            }
+
+            OutlinedButton(
+                onClick = {},
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Relatórios e Métricas Globais")
             }
         }
     }

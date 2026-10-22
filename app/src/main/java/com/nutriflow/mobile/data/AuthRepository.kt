@@ -16,6 +16,7 @@ class AuthRepository(private val sessionManager: SessionManager) {
                 val loginResponse = response.body()!!
                 sessionManager.saveAuthToken(loginResponse.token)
                 sessionManager.saveUserRole(loginResponse.user.profile)
+                sessionManager.saveUserName(loginResponse.user.name)
                 Result.success(loginResponse)
             } else {
                 Result.failure(Exception("Erro no login: ${response.code()}"))
@@ -32,6 +33,7 @@ class AuthRepository(private val sessionManager: SessionManager) {
                 val registerResponse = response.body()!!
                 sessionManager.saveAuthToken(registerResponse.token)
                 sessionManager.saveUserRole(registerResponse.user.profile)
+                sessionManager.saveUserName(registerResponse.user.name)
                 Result.success(registerResponse)
             } else {
                 Result.failure(Exception("Erro no cadastro: ${response.code()}"))
@@ -47,4 +49,5 @@ class AuthRepository(private val sessionManager: SessionManager) {
 
     fun isLoggedIn(): Boolean = sessionManager.getAuthToken() != null
     fun getStoredRole(): String? = sessionManager.getUserRole()
+    fun getStoredName(): String? = sessionManager.getUserName()
 }

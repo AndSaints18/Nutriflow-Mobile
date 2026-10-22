@@ -33,6 +33,14 @@ class SessionManager(context: Context) {
         return sharedPreferences.getString("user_role", null)
     }
 
+    fun saveUserName(name: String) {
+        sharedPreferences.edit().putString("user_name", name).apply()
+    }
+
+    fun getUserName(): String? {
+        return sharedPreferences.getString("user_name", null)
+    }
+
     fun clearSession() {
         sharedPreferences.edit().clear().apply()
     }

@@ -9,6 +9,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.nutriflow.mobile.data.session.SessionManager
+import com.nutriflow.mobile.ui.screens.AdminDashboard
 import com.nutriflow.mobile.ui.screens.AppointmentsScreen
 import com.nutriflow.mobile.ui.screens.ChatScreen
 import com.nutriflow.mobile.ui.screens.CreateMealPlanScreen
@@ -27,6 +28,20 @@ fun isPatientProfile(profile: String?): Boolean {
     return p.equals("PATIENT", ignoreCase = true) || p.equals("Paciente", ignoreCase = true)
 }
 
+fun isAdminProfile(profile: String?): Boolean {
+    if (profile == null) return false
+    val p = profile.trim()
+    return p.equals("ADMIN", ignoreCase = true) || p.equals("Administrador", ignoreCase = true)
+}
+
+fun getDestinationRouteForProfile(profile: String?): String {
+    return when {
+        isAdminProfile(profile) -> Screen.AdminDashboard.route
+        isPatientProfile(profile) -> Screen.PatientDashboard.route
+        else -> Screen.NutritionistDashboard.route
+    }
+}
+
 @Composable
 fun NavGraph(navController: NavHostController) {
     val context = LocalContext.current
@@ -38,7 +53,7 @@ fun NavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
         startDestination = if (authViewModel.uiState is AuthState.Authenticated) {
-            if (isPatientProfile(authViewModel.getRole())) Screen.PatientDashboard.route else Screen.NutritionistDashboard.route
+            getDestinationRouteForProfile(authViewModel.getRole())
         } else {
             Screen.Login.route
         }
@@ -60,11 +75,7 @@ fun NavGraph(navController: NavHostController) {
             
             if (state is AuthState.Success) {
                 LaunchedEffect(state) {
-                    val route = if (isPatientProfile(state.user.profile)) {
-                        Screen.PatientDashboard.route
-                    } else {
-                        Screen.NutritionistDashboard.route
-                    }
+                    val route = getDestinationRouteForProfile(state.user.profile)
                     navController.navigate(route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
@@ -88,11 +99,7 @@ fun NavGraph(navController: NavHostController) {
 
             if (state is AuthState.Success) {
                 LaunchedEffect(state) {
-                    val route = if (isPatientProfile(state.user.profile)) {
-                        Screen.PatientDashboard.route
-                    } else {
-                        Screen.NutritionistDashboard.route
-                    }
+                    val route = getDestinationRouteForProfile(state.user.profile)
                     navController.navigate(route) {
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
@@ -100,15 +107,21 @@ fun NavGraph(navController: NavHostController) {
             }
         }
         composable(Screen.PatientDashboard.route) {
-            PatientDashboard(onLogout = {
-                authViewModel.logout()
-                navController.navigate(Screen.Login.route) {
-                    popUpTo(Screen.PatientDashboard.route) { inclusive = true }
+            val currentUserName = authViewModel.getUserName() ?: "Paciente"
+            PatientDashboard(
+                patientName = currentUserName,
+                onLogout = {
+                    authViewModel.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.PatientDashboard.route) { inclusive = true }
+                    }
                 }
-            })
+            )
         }
         composable(Screen.NutritionistDashboard.route) {
+            val currentUserName = authViewModel.getUserName() ?: "Nutricionista"
             NutritionistDashboard(
+                nutritionistName = currentUserName,
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate(Screen.Login.route) {
@@ -126,6 +139,18 @@ fun NavGraph(navController: NavHostController) {
                 },
                 onOpenChatClick = {
                     navController.navigate(Screen.Chat.createRoute("Amanda Rocha"))
+                }
+            )
+        }
+        composable(Screen.AdminDashboard.route) {
+            val currentUserName = authViewModel.getUserName() ?: "Administrador"
+            AdminDashboard(
+                adminName = currentUserName,
+                onLogout = {
+                    authViewModel.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.AdminDashboard.route) { inclusive = true }
+                    }
                 }
             )
         }
