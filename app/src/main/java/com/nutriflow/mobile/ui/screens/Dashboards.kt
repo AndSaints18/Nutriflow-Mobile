@@ -1,6 +1,5 @@
 package com.nutriflow.mobile.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -20,6 +19,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.nutriflow.mobile.ui.components.MacroDonutChart
 import com.nutriflow.mobile.ui.components.NutriButton
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -113,7 +113,7 @@ fun PatientDashboard(
                         fontWeight = FontWeight.Bold
                     )
 
-                    // Display de Calorias & Macros
+                    // Display de Calorias & Macros com Gráfico de Rosca Nativo
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -129,10 +129,14 @@ fun PatientDashboard(
                             ) {
                                 Box(
                                     contentAlignment = Alignment.Center,
-                                    modifier = Modifier
-                                        .size(90.dp)
-                                        .background(Color(0xFF1E231E), CircleShape)
+                                    modifier = Modifier.size(90.dp)
                                 ) {
+                                    MacroDonutChart(
+                                        proteinPercent = 0.35f,
+                                        carbsPercent = 0.45f,
+                                        fatsPercent = 0.20f,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text("0", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
                                         Text("de 0 kcal", style = MaterialTheme.typography.labelSmall, color = Color.Gray)

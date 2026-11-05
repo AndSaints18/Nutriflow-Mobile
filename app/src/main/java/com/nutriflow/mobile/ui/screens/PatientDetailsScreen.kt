@@ -6,14 +6,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nutriflow.mobile.data.model.MealPlanDto
 import com.nutriflow.mobile.data.model.PatientDto
+import com.nutriflow.mobile.ui.utils.PdfExporter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,6 +26,7 @@ fun PatientDetailsScreen(
     mealPlan: MealPlanDto? = null,
     onBackClick: () -> Unit
 ) {
+    val context = LocalContext.current
     val scrollState = rememberScrollState()
 
     val displayPatientName = patient?.name ?: "Paciente #$patientId"
@@ -126,6 +130,27 @@ fun PatientDetailsScreen(
                         MealItem(mealName = "Jantar (20:00)", description = "120g de Patinho moído + 150g de Batata Doce cozida + legumes no vapor.")
                     }
                 }
+            }
+
+            // Ação da Sprint 5: Exportar PDF / Compartilhar (MOB-32)
+            OutlinedButton(
+                onClick = {
+                    val activePlan = mealPlan ?: MealPlanDto(
+                        id = "1",
+                        patientId = patientId,
+                        title = patient?.currentPlan ?: "Plano Alimentar Ativo",
+                        calories = 2000,
+                        protein = 150,
+                        carbs = 200,
+                        fats = 60
+                    )
+                    PdfExporter(context).generateAndShareMealPlanPdf(activePlan, displayPatientName)
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Exportar / Compartilhar Plano em PDF")
             }
         }
     }

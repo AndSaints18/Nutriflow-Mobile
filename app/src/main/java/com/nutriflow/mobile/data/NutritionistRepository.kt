@@ -1,10 +1,14 @@
 package com.nutriflow.mobile.data
 
+import com.nutriflow.mobile.data.cache.OfflineCacheManager
 import com.nutriflow.mobile.data.model.NutritionistDashboardResponse
 import com.nutriflow.mobile.data.session.SessionManager
 import com.nutriflow.mobile.network.RetrofitClient
 
-class NutritionistRepository(private val sessionManager: SessionManager) {
+class NutritionistRepository(
+    private val sessionManager: SessionManager,
+    private val cacheManager: OfflineCacheManager? = null
+) {
     private val apiService = RetrofitClient.apiService
 
     suspend fun getDashboard(): Result<NutritionistDashboardResponse> {
@@ -14,12 +18,24 @@ class NutritionistRepository(private val sessionManager: SessionManager) {
         return try {
             val response = apiService.getNutritionistDashboard("Bearer $token")
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
+                val data = response.body()!!
+                cacheManager?.saveDashboardCache(data)
+                Result.success(data)
             } else {
-                Result.failure(Exception("Erro ao buscar dashboard: ${response.code()}"))
+                val cachedData = cacheManager?.getDashboardCache()
+                if (cachedData != null) {
+                    Result.success(cachedData)
+                } else {
+                    Result.failure(Exception("Erro ao buscar dashboard: ${response.code()}"))
+                }
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            val cachedData = cacheManager?.getDashboardCache()
+            if (cachedData != null) {
+                Result.success(cachedData)
+            } else {
+                Result.failure(Exception("Sem conexão com a internet. Nenhum dado em cache disponível."))
+            }
         }
     }
 }
