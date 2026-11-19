@@ -28,17 +28,8 @@ fun PatientListScreen(
     onPatientClick: (String) -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    
-    val defaultPatients = listOf(
-        PatientDto(id = "1", name = "Ana Silva", currentPlan = "Emagrecimento", lastAssessment = "10/09/2026"),
-        PatientDto(id = "2", name = "Bruno Costa", currentPlan = "Ganho de Massa", lastAssessment = "05/09/2026"),
-        PatientDto(id = "3", name = "Carla Oliveira", currentPlan = "Reeducação Alimentar", lastAssessment = "01/09/2026"),
-        PatientDto(id = "4", name = "Daniel Santos", currentPlan = "Anti-inflamatório", lastAssessment = "28/08/2026")
-    )
 
-    val activeList = if (patients.isNotEmpty()) patients else defaultPatients
-
-    val filteredPatients = activeList.filter { 
+    val filteredPatients = patients.filter { 
         it.name.contains(searchQuery, ignoreCase = true) 
     }
 
@@ -100,7 +91,7 @@ fun PatientListScreen(
                 filteredPatients.isEmpty() -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
-                            text = "Nenhum paciente encontrado.",
+                            text = if (patients.isEmpty()) "Nenhum paciente cadastrado na sua carteira ainda." else "Nenhum paciente encontrado para a busca.",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

@@ -38,6 +38,32 @@ class NutritionistViewModel(private val repository: NutritionistRepository) : Vi
         }
     }
 
+    fun deleteResource(resource: String, id: String, onResult: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            repository.deleteResource(resource, id)
+                .onSuccess {
+                    fetchDashboard()
+                    onResult(true)
+                }
+                .onFailure {
+                    onResult(false)
+                }
+        }
+    }
+
+    fun updateAppointmentStatus(id: String, status: String, onResult: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            repository.updateAppointmentStatus(id, status)
+                .onSuccess {
+                    fetchDashboard()
+                    onResult(true)
+                }
+                .onFailure {
+                    onResult(false)
+                }
+        }
+    }
+
     companion object {
         fun provideFactory(context: Context, sessionManager: SessionManager): ViewModelProvider.Factory = viewModelFactory {
             initializer {

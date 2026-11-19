@@ -38,4 +38,34 @@ class NutritionistRepository(
             }
         }
     }
+
+    suspend fun deleteResource(resource: String, id: String): Result<Boolean> {
+        val token = sessionManager.getAuthToken()
+            ?: return Result.failure(Exception("Usuário não autenticado"))
+        return try {
+            val response = apiService.deleteResource("Bearer $token", resource, id)
+            if (response.isSuccessful) {
+                Result.success(true)
+            } else {
+                Result.failure(Exception("Erro ao excluir: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateAppointmentStatus(id: String, status: String): Result<Boolean> {
+        val token = sessionManager.getAuthToken()
+            ?: return Result.failure(Exception("Usuário não autenticado"))
+        return try {
+            val response = apiService.updateAppointmentStatus("Bearer $token", id, mapOf("status" to status))
+            if (response.isSuccessful) {
+                Result.success(true)
+            } else {
+                Result.failure(Exception("Erro ao atualizar status: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
