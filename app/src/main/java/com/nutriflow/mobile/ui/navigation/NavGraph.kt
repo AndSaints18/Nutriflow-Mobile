@@ -21,6 +21,10 @@ import com.nutriflow.mobile.ui.screens.PatientListScreen
 import com.nutriflow.mobile.ui.screens.RegisterScreen
 import com.nutriflow.mobile.ui.viewmodel.AuthState
 import com.nutriflow.mobile.ui.viewmodel.AuthViewModel
+import com.nutriflow.mobile.ui.viewmodel.NutritionistUiState
+import com.nutriflow.mobile.ui.viewmodel.NutritionistViewModel
+import com.nutriflow.mobile.ui.viewmodel.PatientUiState
+import com.nutriflow.mobile.ui.viewmodel.PatientViewModel
 
 fun isPatientProfile(profile: String?): Boolean {
     if (profile == null) return false
@@ -49,14 +53,13 @@ fun NavGraph(navController: NavHostController) {
     val authViewModel: AuthViewModel = viewModel(
         factory = AuthViewModel.provideFactory(sessionManager)
     )
+    val nutritionistViewModel: NutritionistViewModel = viewModel(
+        factory = NutritionistViewModel.provideFactory(context, sessionManager)
+    )
     
     NavHost(
         navController = navController,
-        startDestination = if (authViewModel.uiState is AuthState.Authenticated) {
-            getDestinationRouteForProfile(authViewModel.getRole())
-        } else {
-            Screen.Login.route
-        }
+        startDestination = Screen.Login.route
     ) {
         composable(Screen.Login.route) {
             val state = authViewModel.uiState
@@ -107,9 +110,25 @@ fun NavGraph(navController: NavHostController) {
             }
         }
         composable(Screen.PatientDashboard.route) {
+            val patientViewModel: PatientViewModel = viewModel(
+                factory = PatientViewModel.provideFactory(sessionManager)
+            )
             val currentUserName = authViewModel.getUserName() ?: "Paciente"
+            val patientState = patientViewModel.uiState
+
+            LaunchedEffect(Unit) {
+                patientViewModel.fetchDashboard()
+            }
+
+            val dashboardResponse = when (patientState) {
+                is PatientUiState.Success -> patientState.data
+                else -> null
+            }
+
             PatientDashboard(
                 patientName = currentUserName,
+                dashboardData = dashboardResponse,
+                onRefreshClick = { patientViewModel.fetchDashboard() },
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate(Screen.Login.route) {
@@ -120,8 +139,24 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Screen.NutritionistDashboard.route) {
             val currentUserName = authViewModel.getUserName() ?: "Nutricionista"
+            val nutriState = nutritionistViewModel.uiState
+
+            LaunchedEffect(Unit) {
+                nutritionistViewModel.fetchDashboard()
+            }
+
+            val (activePatientsCount, appointmentsCount) = when (nutriState) {
+                is NutritionistUiState.Success -> Pair(
+                    "${nutriState.data.summary.activePatients}",
+                    "${nutriState.data.summary.pendingAppointments}"
+                )
+                else -> Pair("0", "0")
+            }
+
             NutritionistDashboard(
                 nutritionistName = currentUserName,
+                activePatientsCount = activePatientsCount,
+                appointmentsCount = appointmentsCount,
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate(Screen.Login.route) {
@@ -136,9 +171,6 @@ fun NavGraph(navController: NavHostController) {
                 },
                 onCreateMealPlanClick = {
                     navController.navigate(Screen.CreateMealPlan.route)
-                },
-                onOpenChatClick = {
-                    navController.navigate(Screen.Chat.createRoute("Amanda Rocha"))
                 }
             )
         }
@@ -148,14 +180,29 @@ fun NavGraph(navController: NavHostController) {
                 adminName = currentUserName,
                 onLogout = {
                     authViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
+                    navController.navigate(Screen.AdminDashboard.route) {
                         popUpTo(Screen.AdminDashboard.route) { inclusive = true }
                     }
                 }
             )
         }
         composable(Screen.PatientList.route) {
+            val nutriState = nutritionistViewModel.uiState
+
+            LaunchedEffect(Unit) {
+                nutritionistViewModel.fetchDashboard()
+            }
+
+            val patientsList = when (nutriState) {
+                is NutritionistUiState.Success -> nutriState.data.patients
+                else -> emptyList()
+            }
+
             PatientListScreen(
+                patients = patientsList,
+                isLoading = nutriState is NutritionistUiState.Loading,
+                errorMessage = if (nutriState is NutritionistUiState.Error) nutriState.message else null,
+                onRetryClick = { nutritionistViewModel.fetchDashboard() },
                 onBackClick = { navController.popBackStack() },
                 onPatientClick = { patientId ->
                     navController.navigate(Screen.PatientDetails.createRoute(patientId))
@@ -164,13 +211,46 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Screen.PatientDetails.route) { backStackEntry ->
             val patientId = backStackEntry.arguments?.getString("patientId") ?: ""
+            val nutriState = nutritionistViewModel.uiState
+
+            val currentPatient = when (nutriState) {
+                is NutritionistUiState.Success -> nutriState.data.patients.find { it.id == patientId }
+                else -> null
+            }
+
+            val currentMealPlan = when (nutriState) {
+                is NutritionistUiState.Success -> nutriState.data.mealPlans.find { it.patientId == patientId }
+                else -> null
+            }
+
             PatientDetailsScreen(
                 patientId = patientId,
+                patient = currentPatient,
+                mealPlan = currentMealPlan,
                 onBackClick = { navController.popBackStack() }
             )
         }
         composable(Screen.Appointments.route) {
+            val nutriState = nutritionistViewModel.uiState
+
+            LaunchedEffect(Unit) {
+                nutritionistViewModel.fetchDashboard()
+            }
+
+            val appointmentsList = when (nutriState) {
+                is NutritionistUiState.Success -> nutriState.data.appointments
+                else -> emptyList()
+            }
+
             AppointmentsScreen(
+                appointmentsFromApi = appointmentsList,
+                onRefreshClick = { nutritionistViewModel.fetchDashboard() },
+                onDeleteAppointmentClick = { appointmentId ->
+                    nutritionistViewModel.deleteResource("appointments", appointmentId)
+                },
+                onStatusChangeClick = { appointmentId, newStatus ->
+                    nutritionistViewModel.updateAppointmentStatus(appointmentId, newStatus)
+                },
                 onBackClick = { navController.popBackStack() }
             )
         }
