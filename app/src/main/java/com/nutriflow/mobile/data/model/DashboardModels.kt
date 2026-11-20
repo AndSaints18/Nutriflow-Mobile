@@ -5,7 +5,16 @@ data class NutritionistDashboardResponse(
     val summary: DashboardSummaryDto,
     val patients: List<PatientDto> = emptyList(),
     val mealPlans: List<MealPlanDto> = emptyList(),
-    val appointments: List<AppointmentDto> = emptyList()
+    val appointments: List<AppointmentDto> = emptyList(),
+    val challenges: List<ChallengeDto> = emptyList()
+)
+
+data class ChallengeDto(
+    val id: String,
+    val title: String,
+    val target: String,
+    val participants: Int = 0,
+    val progress: Int = 0
 )
 
 data class AppointmentDto(
@@ -133,7 +142,8 @@ data class PatientDto(
     val bodyFat: Double = 0.0,
     val nextAppointment: String? = null,
     val lastMessagePreview: String? = null,
-    val lastMessageTime: String? = null
+    val lastMessageTime: String? = null,
+    val nutritionist: UserDto? = null
 )
 
 data class MealPlanDto(
@@ -182,6 +192,12 @@ data class CreateMealPlanRequest(
     val carbs: Int,
     val fats: Int,
     val notes: String? = null
+)
+
+data class CreateChallengeRequest(
+    val title: String,
+    val target: String,
+    val participantIds: List<String> = emptyList()
 )
 
 data class CreateAppointmentRequest(

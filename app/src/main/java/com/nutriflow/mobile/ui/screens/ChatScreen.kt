@@ -47,13 +47,19 @@ fun FloatingChatFAB(onClick: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FloatingChatPopupDialog(
-    onDismissRequest: () -> Unit
+    connectedPatients: List<String> = emptyList(),
+    onDismissRequest: () -> Unit,
+    onSendMessageClick: (String, String) -> Unit = { _, _ -> }
 ) {
-    var selectedContact by remember { mutableStateOf("Andrei Araripe Paciente") }
+    val contactsList = remember(connectedPatients) {
+        if (connectedPatients.isNotEmpty()) connectedPatients.distinct()
+        else listOf("Andrei Araripe Paciente")
+    }
+
+    var selectedContact by remember(contactsList) { mutableStateOf(contactsList.firstOrNull() ?: "Contato") }
     var inputMessage by remember { mutableStateOf("") }
     var dropdownExpanded by remember { mutableStateOf(false) }
 
-    val contactsList = listOf("Andrei Araripe Paciente", "Ana Silva", "Bruno Costa", "Carla Oliveira")
     val messagesList = remember { mutableStateListOf<String>() }
 
     AlertDialog(
@@ -142,7 +148,7 @@ fun FloatingChatPopupDialog(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "Nenhuma mensagem com $selectedContact ainda. Use o campo abaixo para iniciar a conversa.",
+                                    text = "Nenhuma mensagem com $selectedContact ainda. Use o campo abaixo para enviar.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -179,8 +185,10 @@ fun FloatingChatPopupDialog(
                         Button(
                             onClick = {
                                 if (inputMessage.isNotBlank()) {
-                                    messagesList.add("Você: ${inputMessage.trim()}")
+                                    val text = inputMessage.trim()
+                                    messagesList.add("Você: $text")
                                     inputMessage = ""
+                                    onSendMessageClick(selectedContact, text)
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E231E))
@@ -198,6 +206,7 @@ fun FloatingChatPopupDialog(
 @Composable
 fun ChatScreen(
     patientName: String = "Amanda Rocha",
+    onSendMessageClick: (String) -> Unit = {},
     onBackClick: () -> Unit
 ) {
     var messageText by remember { mutableStateOf("") }
@@ -205,8 +214,7 @@ fun ChatScreen(
     val messages = remember {
         mutableStateListOf(
             ChatMessageItem("1", patientName, false, "10:15", "Olá Nutri, estou com dúvida sobre o lanche da tarde."),
-            ChatMessageItem("2", "Você", true, "10:20", "Olá Amanda! Pode substituir a banana por 1 maçã se preferir."),
-            ChatMessageItem("3", patientName, false, "10:22", "Perfeito, muito obrigada! Salada de frutas pode?")
+            ChatMessageItem("2", "Você", true, "10:20", "Olá! Pode substituir a banana por 1 maçã se preferir.")
         )
     }
 
@@ -260,16 +268,18 @@ fun ChatScreen(
                     IconButton(
                         onClick = {
                             if (messageText.isNotBlank()) {
+                                val textToSend = messageText.trim()
                                 messages.add(
                                     ChatMessageItem(
                                         id = System.currentTimeMillis().toString(),
                                         senderName = "Você",
                                         isFromMe = true,
                                         timeLabel = "Agora",
-                                        content = messageText.trim()
+                                        content = textToSend
                                     )
                                 )
                                 messageText = ""
+                                onSendMessageClick(textToSend)
                             }
                         },
                         colors = IconButtonDefaults.iconButtonColors(

@@ -38,6 +38,32 @@ class NutritionistViewModel(private val repository: NutritionistRepository) : Vi
         }
     }
 
+    fun createChallenge(title: String, target: String, participantIds: List<String> = emptyList(), onResult: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            repository.createChallenge(title, target, participantIds)
+                .onSuccess {
+                    fetchDashboard()
+                    onResult(true)
+                }
+                .onFailure {
+                    onResult(false)
+                }
+        }
+    }
+
+    fun addChallengeParticipant(challengeId: String, patientId: String, onResult: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            repository.addChallengeParticipant(challengeId, patientId)
+                .onSuccess {
+                    fetchDashboard()
+                    onResult(true)
+                }
+                .onFailure {
+                    onResult(false)
+                }
+        }
+    }
+
     fun deleteResource(resource: String, id: String, onResult: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
             repository.deleteResource(resource, id)
@@ -54,6 +80,19 @@ class NutritionistViewModel(private val repository: NutritionistRepository) : Vi
     fun updateAppointmentStatus(id: String, status: String, onResult: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
             repository.updateAppointmentStatus(id, status)
+                .onSuccess {
+                    fetchDashboard()
+                    onResult(true)
+                }
+                .onFailure {
+                    onResult(false)
+                }
+        }
+    }
+
+    fun sendMessage(patientId: String, content: String, onResult: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            repository.sendMessage(patientId, content)
                 .onSuccess {
                     fetchDashboard()
                     onResult(true)

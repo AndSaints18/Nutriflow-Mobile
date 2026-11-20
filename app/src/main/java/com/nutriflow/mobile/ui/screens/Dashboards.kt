@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.nutriflow.mobile.data.model.ChallengeDto
 import com.nutriflow.mobile.data.model.PatientDashboardResponse
 import com.nutriflow.mobile.ui.components.MacroDonutChart
 import com.nutriflow.mobile.ui.components.NutriButton
@@ -66,6 +68,7 @@ fun PatientDashboard(
 
     if (showChatDialog) {
         FloatingChatPopupDialog(
+            connectedPatients = listOf(dashboardData?.patient?.nutritionist?.name ?: nutritionistName),
             onDismissRequest = { showChatDialog = false }
         )
     }
@@ -226,16 +229,20 @@ fun PatientDashboard(
                 .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            val displayObjective = dashboardData?.patient?.objective ?: objective
+            val displayNutriName = dashboardData?.patient?.nutritionist?.name ?: nutritionistName
+            val displayNextAppt = dashboardData?.clinical?.nextAppointment?.dateLabel ?: nextAppointmentState
+
             // Badges de Status (Objetivo, Nutricionista, Consulta)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                StatusBadge(title = "SEU OBJETIVO", value = objective, modifier = Modifier.weight(1f))
-                StatusBadge(title = "NUTRICIONISTA", value = nutritionistName, modifier = Modifier.weight(1f))
+                StatusBadge(title = "SEU OBJETIVO", value = displayObjective, modifier = Modifier.weight(1f))
+                StatusBadge(title = "NUTRICIONISTA", value = displayNutriName, modifier = Modifier.weight(1f))
                 StatusBadge(
                     title = "PRÓXIMA CONSULTA",
-                    value = nextAppointmentState,
+                    value = displayNextAppt,
                     onClick = { showAddAppointmentDialog = true },
                     modifier = Modifier.weight(1f)
                 )
@@ -809,16 +816,83 @@ fun NutritionistDashboard(
     onViewPatientsClick: () -> Unit,
     onViewAppointmentsClick: () -> Unit = {},
     onCreateMealPlanClick: () -> Unit = {},
+    onCreateChallengeClick: (String, String) -> Unit = { _, _ -> },
+    onDeleteChallengeClick: (String) -> Unit = {},
     activePatientsCount: String = "24",
-    appointmentsCount: String = "5"
+    appointmentsCount: String = "5",
+    connectedPatientsList: List<String> = emptyList(),
+    challengesFromApi: List<ChallengeDto> = emptyList()
 ) {
     var showChatDialog by remember { mutableStateOf(false) }
+    var showCreateChallengeDialog by remember { mutableStateOf(false) }
+
+    var challengeTitleInput by remember { mutableStateOf("") }
+    var challengeTargetInput by remember { mutableStateOf("") }
+
+    val localChallenges = remember { mutableStateListOf<ChallengeDto>() }
+    val deletedChallengeIds = remember { mutableStateListOf<String>() }
+
+    val displayChallengesList = remember(challengesFromApi, localChallenges.size, deletedChallengeIds.size) {
+        val apiItems = challengesFromApi.filter { !deletedChallengeIds.contains(it.id) }
+        val localItems = localChallenges.filter { !deletedChallengeIds.contains(it.id) }
+        (localItems + apiItems).distinctBy { it.id }
+    }
 
     if (showChatDialog) {
         FloatingChatPopupDialog(
+            connectedPatients = connectedPatientsList,
             onDismissRequest = { showChatDialog = false }
         )
     }
+
+    if (showCreateChallengeDialog) {
+        AlertDialog(
+            onDismissRequest = { showCreateChallengeDialog = false },
+            title = { Text("Novo Desafio Nutricional", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = challengeTitleInput,
+                        onValueChange = { challengeTitleInput = it },
+                        label = { Text("Título do Desafio") },
+                        placeholder = { Text("Ex: Parar de ser gordo") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = challengeTargetInput,
+                        onValueChange = { challengeTargetInput = it },
+                        label = { Text("Objetivo e Prêmio") },
+                        placeholder = { Text("Ex: Meta | 🎁 Prêmio: 1 consulta grátis") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (challengeTitleInput.isNotBlank()) {
+                            val fullTarget = challengeTargetInput.ifBlank { challengeTitleInput }
+                            val newId = System.currentTimeMillis().toString()
+                            localChallenges.add(0, ChallengeDto(id = newId, title = challengeTitleInput, target = fullTarget))
+                            onCreateChallengeClick(challengeTitleInput, fullTarget)
+                            challengeTitleInput = ""
+                            challengeTargetInput = ""
+                            showCreateChallengeDialog = false
+                        }
+                    }
+                ) {
+                    Text("Criar Desafio")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showCreateChallengeDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    val scrollState = rememberScrollState()
 
     Scaffold(
         topBar = {
@@ -852,7 +926,8 @@ fun NutritionistDashboard(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
@@ -874,7 +949,7 @@ fun NutritionistDashboard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             NutriButton(
                 text = "Ver Todos os Pacientes",
@@ -893,6 +968,91 @@ fun NutritionistDashboard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Criar Novo Plano Alimentar")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Seção de Desafios Ativos (Paridade com a Web)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Desafios Ativos",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        OutlinedButton(onClick = { showCreateChallengeDialog = true }) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Novo Desafio")
+                        }
+                    }
+
+                    if (displayChallengesList.isEmpty()) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Nenhum desafio cadastrado no momento.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        }
+                    } else {
+                        displayChallengesList.forEach { item ->
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = item.title,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = item.target,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+
+                                    IconButton(
+                                        onClick = {
+                                            deletedChallengeIds.add(item.id)
+                                            localChallenges.removeAll { it.id == item.id }
+                                            onDeleteChallengeClick(item.id)
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = "Excluir Desafio",
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

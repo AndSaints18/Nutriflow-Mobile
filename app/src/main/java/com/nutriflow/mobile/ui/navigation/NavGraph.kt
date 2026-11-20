@@ -153,10 +153,28 @@ fun NavGraph(navController: NavHostController) {
                 else -> Pair("0", "0")
             }
 
+            val connectedPatientsNames = when (nutriState) {
+                is NutritionistUiState.Success -> nutriState.data.patients.map { it.name }
+                else -> emptyList()
+            }
+
+            val challengesFromApi = when (nutriState) {
+                is NutritionistUiState.Success -> nutriState.data.challenges
+                else -> emptyList()
+            }
+
             NutritionistDashboard(
                 nutritionistName = currentUserName,
                 activePatientsCount = activePatientsCount,
                 appointmentsCount = appointmentsCount,
+                connectedPatientsList = connectedPatientsNames,
+                challengesFromApi = challengesFromApi,
+                onCreateChallengeClick = { title, target ->
+                    nutritionistViewModel.createChallenge(title, target)
+                },
+                onDeleteChallengeClick = { challengeId ->
+                    nutritionistViewModel.deleteResource("challenges", challengeId)
+                },
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate(Screen.Login.route) {

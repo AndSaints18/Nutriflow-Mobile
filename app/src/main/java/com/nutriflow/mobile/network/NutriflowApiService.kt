@@ -3,6 +3,7 @@ package com.nutriflow.mobile.network
 import com.nutriflow.mobile.data.model.AdminSummaryResponse
 import com.nutriflow.mobile.data.model.ApiResponse
 import com.nutriflow.mobile.data.model.CreateAppointmentRequest
+import com.nutriflow.mobile.data.model.CreateChallengeRequest
 import com.nutriflow.mobile.data.model.CreateFoodRequest
 import com.nutriflow.mobile.data.model.CreateMealEntryRequest
 import com.nutriflow.mobile.data.model.CreateMealPlanRequest
@@ -38,6 +39,19 @@ interface NutriflowApiService {
     suspend fun createMealPlan(
         @Header("Authorization") token: String,
         @Body request: CreateMealPlanRequest
+    ): Response<ApiResponse>
+
+    @POST("nutritionist/challenges")
+    suspend fun createChallenge(
+        @Header("Authorization") token: String,
+        @Body request: CreateChallengeRequest
+    ): Response<ApiResponse>
+
+    @POST("nutritionist/challenges/{id}/participants")
+    suspend fun addChallengeParticipant(
+        @Header("Authorization") token: String,
+        @Path("id") id: String,
+        @Body request: Map<String, String>
     ): Response<ApiResponse>
 
     @POST("nutritionist/appointments")
